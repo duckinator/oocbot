@@ -75,7 +75,7 @@ TestBot: class extends IRC {
 main: func {
     ninthbit := TestBot new("oocbot", "oocbot", "IRC bot using the spry lib, written in ooc", "irc.ninthbit.net", 6667, ".", "#offtopic")
     freenode := TestBot new("oocbot", "oocbot", "IRC bot using the spry lib, written in ooc", "irc.ninthbit.net", 6667, ".", "#ooc-lang")
-//    Thread new(|| ninthbit run()) start()
+    Thread new(|| ninthbit run()) start()
 //    Thread new(|| freenode run()) start()
     freenode run()
     
