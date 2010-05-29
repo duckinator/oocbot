@@ -1,8 +1,15 @@
+import threading/Thread, os/Time
 import net/StreamSocket
 import ../spry/spry/[IRC, Commands, Prefix]
 
 TestBot: class extends IRC {
+    defaultChannel: String
+
     init: func ~TestBot (.nick, .user, .realname, .server, .port, .trigger) {
+        super(nick, user, realname, server, port, trigger)
+    }
+
+    init: func ~defaultChannel (.nick, .user, .realname, .server, .port, .trigger, =defaultChannel) {
         super(nick, user, realname, server, port, trigger)
     }
 
@@ -66,6 +73,13 @@ TestBot: class extends IRC {
 }
 
 main: func {
-    bot := TestBot new("oocbot", "oocbot", "IRC bot using the spry lib, written in ooc", "irc.ninthbit.net", 6667, ".")
-    bot run()
+    ninthbit := TestBot new("oocbot", "oocbot", "IRC bot using the spry lib, written in ooc", "irc.ninthbit.net", 6667, ".", "#offtopic")
+    freenode := TestBot new("oocbot", "oocbot", "IRC bot using the spry lib, written in ooc", "irc.ninthbit.net", 6667, ".", "#ooc-lang")
+//    Thread new(|| ninthbit run()) start()
+//    Thread new(|| freenode run()) start()
+    freenode run()
+    
+/*    while (true) {
+        Time sleepSec(10)
+    }*/
 }
