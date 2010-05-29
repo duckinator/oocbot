@@ -1,12 +1,12 @@
-OOC=ooc
-OOCFLAGS=-driver=sequence -noclean
+OOC?=rock
+OOCFLAGS=-noclean
 
 all: oocbot
 
 oocbot:
-	${OOC} ${OOCFLAGS} $(shell find . -name "*.ooc") -o=oocbot
+	${OOC} ${OOCFLAGS} oocbot.ooc -o=oocbot
   
 clean:
-	rm oocbot
+	rm -rf oocbot .libs rock_tmp spry
 
 .PHONY: all clean oocbot
