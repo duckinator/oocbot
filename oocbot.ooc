@@ -1,84 +1,69 @@
-import threading/Thread, os/Time
-import net/StreamSocket
-import ../spry/spry/[IRC, Commands, Prefix]
+import net/TCPSocket, text/StringTokenizer, structs/ArrayList
+import net/ServerSocket // Note: This should be moved to TCPSocket
 
-TestBot: class extends IRC {
-    defaultChannel: String
-
-    init: func ~TestBot (.nick, .user, .realname, .server, .port, .trigger) {
-        super(nick, user, realname, server, port, trigger)
-    }
-
-    init: func ~defaultChannel (.nick, .user, .realname, .server, .port, .trigger, =defaultChannel) {
-        super(nick, user, realname, server, port, trigger)
-    }
-
-    onSend: func (cmd: Command) {
-        ">> " print()
-        cmd toString() println()
-    }
-
-    onAll: func (cmd: Command) {
-        cmd toString() println()
-    }
-
-    onNick: func (cmd: Nick) {
-        "%s is now known as %s" format(cmd prefix, cmd nick()) println()
-    }
-
-//    onJoin: func (cmd: Join) {
-//        if(cmd prefix nick != this nick)
-//            say("Welcome to %s, %s!" format(cmd channel(), cmd prefix nick))
-//    }
-
-    onChannelMessage: func (cmd: Message) {
-        handleCommand(cmd)
-    }
-
-    onPrivateMessage: func (cmd: Message) {
-        handleCommand(cmd)
-    }
-
-    onUnhandled: func (cmd: Command) {
-        if (cmd command == "001") {
-            send(Join new(cmd irc, "#offtopic") as Command)
-        }
-    }
-
-    handleCommand: func (msg: Message) {
-        if(!addressed) return
-
-        i := commandString indexOf(' ')
-        cmd := commandString[0..i]
-
-        if(i != -1) i += 1
-        rest := commandString[i..-1]
-
-        match(cmd) {
-            case "join" =>
-                Join new(this, rest) send()
-            case "ping" =>
-                reply("pong")
-            case "echo" =>
-                reply(rest)
-            case "trigger" =>
-                trigger = rest
-                reply("Done.")
-            case "help" =>
-                reply("ping, echo, trigger, help")
-            case "die" =>
-                if(rest == "   ") exit(0)
-        }
-    }
-}
-
-main: func {
-    ninthbit := TestBot new("oocbot", "oocbot", "IRC bot using the spry lib, written in ooc", "irc.ninthbit.net", 6667, ".", "#bots")
-//    freenode := TestBot new("oocbot", "oocbot", "IRC bot using the spry lib, written in ooc", "irc.ninthbit.net", 6667, ".", "#ooc-lang")
-    Thread new(|| ninthbit run()) start()
-//    Thread new(|| freenode run()) start()
+IRCBot: class {
+    nick, username, realname, server, prefix, channel: String
+    port: SizeT
+    sock: TCPSocket
+    conn: ReaderWriterPair /* Rename ReaderWriterPair -> TCPReaderWriterPair? */
     
-    while (true) {
-        Time sleepSec(10)
+    init: func (=nick, =username, =realname, =server, =port, =prefix, =channel) {
+        // Empty
+    }
+
+    connect: func {
+        sock = TCPSocket new(server, port)
+        sock connect()
+        /* We need a wrapper akin to ServerSocket accept() */
+        conn = ReaderWriterPair new(sock)
+        conn out write("NICK %s\r\nUSER %s * * :%s\r\n" format(nick, username, realname))
+    }
+
+    run: func {
+        connect()
+        conn in eachLine(|line|
+            /* FIXME: Since readLine() is blocking, we can safely assume
+             *+ that if `line` is empty at this point, it means may 
+             *+ somehow be missing the fact that the socket is closed.
+             * This is probably a bug, and needs to be addressed.
+             */
+            if (line empty?()) {
+                sock close()
+                return false
+            }
+            
+            line println()
+            
+            ret := handle(line)
+            
+            if (!ret empty?()) {
+                ret  println()
+                conn out write(ret + "\r\n")
+            }
+            
+            sock connected?
+        )
+    }
+
+    handle: func (line: String) -> String {
+        params := ArrayList<String> new()
+        parts := line split(':')
+        parts[1] split(' ') each(|word|
+            params add(word)
+        )
+        params add(parts[1])
+        
+        match(params[1]) {
+            case "PING" =>
+                "PONG %s" format(params[2..-1] join(" "))
+            case "001"  =>
+                "JOIN %s" format(channel)
+            case "PRIVMSG" =>
+                "PRIVMSG %s :TADA" format(params[2])
+            case => ""
+        }
     }
 }
+
+bot := IRCBot new("oocbot", "oocbot", "IRC bot written in ooc", "irc.ninthbit.net", 6667, ".", "#bots")
+bot run()

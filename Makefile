@@ -1,12 +1,12 @@
-OOC?=rock
-OOCFLAGS=-noclean
+OC?=rock
+#OCFLAGS=-noclean
 
 all: oocbot
 
 oocbot:
-	${OOC} ${OOCFLAGS} oocbot.ooc -o=oocbot
+	${OC} ${OCFLAGS} oocbot.ooc -o=oocbot
   
 clean:
-	rm -rf oocbot .libs rock_tmp spry
+	rm -rf oocbot .libs ${OC}_tmp
 
 .PHONY: all clean oocbot
