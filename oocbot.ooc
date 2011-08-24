@@ -8,7 +8,7 @@ sock := TCPSocket new("irc.ninthbit.net", 6667)
 sock connect()
 
 /* We need a wrapper akin to ServerSocket accept() */
-conn := ReaderWriterPair new(sock)
+conn := ReaderWriterPair new(sock) // Rename to TCPReaderWriterPair?
 conn out write("NICK oocbot\r\n")
 conn out write("USER oocbot * * :IRC bot in ooc\r\n")
 
