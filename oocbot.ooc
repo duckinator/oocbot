@@ -3,7 +3,7 @@ import net/TCPSocket, text/StringTokenizer, structs/ArrayList
 ret: String
 params := ArrayList<String> new()
 
-sock := TCPSocket new("irc.ninthbit.net", 6667)
+sock := TCPSocket new("irc.tenthbit.net", 6667)
 sock connect(|conn|
     conn out write("NICK oocbot\r\n")
     conn out write("USER oocbot * * :IRC bot in ooc\r\n")
